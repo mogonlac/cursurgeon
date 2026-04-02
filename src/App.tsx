@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import { NavLink, Outlet, Route, Routes } from 'react-router-dom';
 import { DemoPage } from './pages/DemoPage';
+import { EmbedPage } from './pages/EmbedPage';
 import { PitchPage } from './pages/PitchPage';
 
 function MainShell() {
@@ -67,6 +68,7 @@ function MainShell() {
 function App() {
   return (
     <Routes>
+      <Route path="/embed" element={<EmbedPage />} />
       <Route path="/workspace" element={<DemoPage variant="workspace" />} />
       <Route element={<MainShell />}>
         <Route path="/" element={<PitchPage />} />

@@ -7,6 +7,7 @@ export function buildWebviewHtml(
   extensionUri: vscode.Uri,
   extensionPath: string,
   hash: string,
+  previewUrl: string,
 ): string {
   const indexFsPath = path.join(extensionPath, 'media', 'index.html');
   if (!fs.existsSync(indexFsPath)) {
@@ -22,7 +23,8 @@ export function buildWebviewHtml(
   });
 
   const bridge = `<script>(function(){var v=acquireVsCodeApi();window.cursurgeon={post:function(m){return v.postMessage(m)}};})();<\/script>`;
+  const boot = `<script>window.__CURSURGEON__=${JSON.stringify({ previewUrl })};<\/script>`;
   const route = `<script>window.location.hash=${JSON.stringify(hash)};<\/script>`;
-  html = html.replace('<body>', `<body>${bridge}${route}`);
+  html = html.replace('<body>', `<body>${bridge}${boot}${route}`);
   return html;
 }

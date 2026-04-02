@@ -12,3 +12,7 @@ export function isCursurgeonHost(): boolean {
 export function postSendToChat(text: string): void {
   window.cursurgeon?.post({ type: 'sendToChat', text });
 }
+
+export function postExtensionMessage(msg: unknown): void {
+  window.cursurgeon?.post(msg);
+}

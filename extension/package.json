@@ -1,8 +1,8 @@
 {
   "name": "cursurgeon",
   "displayName": "Cursurgeon",
-  "description": "Surgical UI preview in the sidebar — screenshot a region, send plain text to Cursor chat.",
-  "version": "0.3.0",
+  "description": "Side pane with live project preview, screenshot-to-inline-prompt for Cursor chat.",
+  "version": "0.4.0",
   "publisher": "mogonlac",
   "icon": "resources/icon.png",
   "repository": {
@@ -21,6 +21,16 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "configuration": {
+      "title": "Cursurgeon",
+      "properties": {
+        "cursurgeon.previewUrl": {
+          "type": "string",
+          "default": "http://localhost:5173",
+          "description": "Default URL for the live preview iframe (e.g. Vite dev server)."
+        }
+      }
+    },
     "viewsContainers": {
       "activitybar": [
         {
@@ -35,25 +45,25 @@
         {
           "type": "webview",
           "id": "cursurgeon.preview",
-          "name": "Preview",
-          "contextualTitle": "Cursurgeon preview"
+          "name": "Cursurgeon",
+          "contextualTitle": "Cursurgeon"
         }
       ]
     },
     "commands": [
       {
         "command": "cursurgeon.focusPreview",
-        "title": "Cursurgeon: Focus preview (activity bar)",
+        "title": "Cursurgeon: Focus side pane",
         "category": "Cursurgeon"
       },
       {
         "command": "cursurgeon.openPanel",
-        "title": "Cursurgeon: Open preview beside editor",
+        "title": "Cursurgeon: Open beside editor",
         "category": "Cursurgeon"
       },
       {
         "command": "cursurgeon.openSimpleBrowser",
-        "title": "Cursurgeon: Open in Simple Browser (dev server)",
+        "title": "Cursurgeon: Open preview URL in Simple Browser",
         "category": "Cursurgeon"
       }
     ]

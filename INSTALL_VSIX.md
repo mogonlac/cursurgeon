@@ -32,23 +32,24 @@ The **⋯** menu does not always show **Install from VSIX** in Cursor. Use any o
 ### C. Terminal
 
 ```powershell
-cursor --install-extension "C:\path\to\cursurgeon\extension\cursurgeon-0.3.0.vsix"
+cursor --install-extension "C:\path\to\cursurgeon\extension\cursurgeon-0.4.0.vsix"
 ```
 
 If `cursor` is not on PATH, use the full executable, for example:
 
 ```powershell
-& "$env:LOCALAPPDATA\Programs\cursor\Cursor.exe" --install-extension "C:\path\to\extension\cursurgeon-0.3.0.vsix"
+& "$env:LOCALAPPDATA\Programs\cursor\Cursor.exe" --install-extension "C:\path\to\extension\cursurgeon-0.4.0.vsix"
 ```
 
 Then **Reload** if Cursor asks.
 
 ## 3. Use it (main window only)
 
-1. In the **activity bar** (vertical icons), click **Cursurgeon** (chart icon).
-2. The **Preview** view opens in the sidebar with the Northwind sample and **Screenshot** flow.
-3. To put the sidebar on the **right**: **Settings** → search **`workbench.sideBar.location`** → **right**.
-4. After you select a region, use **Send to Cursor chat** (paste + focus chat — see note below) or **Copy for chat**.
+1. Start your app (**`npm run dev`** or similar) so something is on e.g. `http://localhost:5173`.
+2. In the **activity bar**, click **Cursurgeon**. The side pane loads a **live iframe** of that URL (change it with **Apply** if needed).
+3. Optional: **`preview/sample.html`** — run `npx --yes serve preview` and set the URL Cursurgeon shows (e.g. `http://localhost:3000/sample.html`).
+4. **Screenshot** → OS picker: choose the **window or tab** where your preview is visible → **Freeze frame** → drag region → **Send to Cursor chat** / **Copy for chat**.
+5. Sidebar on the **right**: Settings → **`workbench.sideBar.location`** → **right**.
 
 You do **not** need F5 or a second “Extension Development Host” window when installed this way.
 

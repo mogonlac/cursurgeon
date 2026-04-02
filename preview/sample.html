@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sample — Cursurgeon preview</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: system-ui, sans-serif;
+        background: #0f1419;
+        color: #e7eef5;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+      }
+      .card {
+        max-width: 420px;
+        padding: 2rem;
+        border-radius: 12px;
+        background: #1a222c;
+        border: 1px solid #2a3542;
+      }
+      h1 {
+        margin: 0 0 0.5rem;
+        font-size: 1.5rem;
+      }
+      p {
+        margin: 0 0 1.25rem;
+        color: #9eb0c4;
+        line-height: 1.5;
+      }
+      .row {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .ghost {
+        padding: 0.55rem 1rem;
+        border-radius: 8px;
+        border: 1px solid #3d4d5f;
+        background: transparent;
+        color: #e7eef5;
+        cursor: default;
+      }
+      .primary {
+        padding: 0.6rem 1.1rem;
+        border-radius: 8px;
+        border: none;
+        background: linear-gradient(180deg, #5ee4b8, #1fa87a);
+        color: #04120d;
+        font-weight: 700;
+        cursor: default;
+        transform: translateY(6px);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>Local sample site</h1>
+      <p>
+        Serve this folder (e.g. <strong>npx serve preview</strong> or Live Server) and put that URL in Cursurgeon — or use your real app at
+        <code style="color: #5ee4b8">localhost:5173</code>.
+      </p>
+      <div class="row">
+        <button type="button" class="ghost">Secondary</button>
+        <button type="button" class="primary">Primary CTA</button>
+      </div>
+    </div>
+  </body>
+</html>

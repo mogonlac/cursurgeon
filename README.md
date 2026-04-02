@@ -7,7 +7,7 @@ This repo includes:
 - **Pitch site** (`#/`) — hackathon narrative, track fit, judge path
 - **Live demo** (`#/demo`) — two-column flow + **Northwind** sample landing
 - **Panel layout** (`#/workspace`) — compact layout for a narrow column (side panel or video)
-- **Cursor / VS Code extension** (`extension/`) — opens the same UI in a **webview beside your editor**
+- **Cursor / VS Code extension** (`extension/`) — **Cursurgeon** side pane: **live iframe** to your dev server + **Screenshot** (screen capture) → crop → **inline prompt** for chat
 
 Routing uses the **hash** (`#/demo`, `#/workspace`) so static deploys (Vercel, GitHub Pages) need no server rewrites.
 

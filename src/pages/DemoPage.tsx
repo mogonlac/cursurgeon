@@ -1,144 +1,135 @@
 import html2canvas from 'html2canvas';
 import type { CSSProperties, MouseEvent as ReactMouseEvent } from 'react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { SampleSitePreview } from '../components/SampleSitePreview';
-import { buildSurgicalPrompt, type Bbox } from '../lib/buildSurgicalPrompt';
+import { buildInlineChatPrompt } from '../lib/inlineChatPrompt';
 
-type Sel =
-  | null
-  | {
-      x: number;
-      y: number;
-      w: number;
-      h: number;
-    };
+type Phase = 'idle' | 'selecting' | 'ready';
 
-function initialPreviewUrl() {
-  if (typeof window === 'undefined') return 'http://localhost:5173/demo';
-  return window.location.href;
-}
+type DragState = { ax: number; ay: number; bx: number; by: number } | null;
 
 export type DemoVariant = 'page' | 'workspace';
 
 export type DemoPageProps = {
-  /** `workspace` = Cursor side panel: tight layout, no global nav (route /workspace). */
   variant?: DemoVariant;
 };
 
 export function DemoPage({ variant = 'page' }: DemoPageProps) {
   const isWorkspace = variant === 'workspace';
   const previewHostRef = useRef<HTMLDivElement>(null);
-  const shotWrapRef = useRef<HTMLDivElement>(null);
 
+  const [phase, setPhase] = useState<Phase>('idle');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [screenshot, setScreenshot] = useState<string | null>(null);
-  const [natural, setNatural] = useState<{ w: number; h: number } | null>(null);
-  const [sel, setSel] = useState<Sel>(null);
-  const [drag, setDrag] = useState<{ ax: number; ay: number; bx: number; by: number } | null>(null);
+  const [drag, setDrag] = useState<DragState>(null);
   const [cropUrl, setCropUrl] = useState<string | null>(null);
+  /** First-line hint merged into the generated chat prompt when selection completes. */
+  const [changeHint, setChangeHint] = useState('');
+  const [promptDraft, setPromptDraft] = useState('');
 
-  const [previewUrl, setPreviewUrl] = useState(initialPreviewUrl);
-  const [route, setRoute] = useState(isWorkspace ? '/workspace' : '/demo');
-  const [intent, setIntent] = useState(
-    'Align the primary “Start free trial” button with “Book a walkthrough” and nudge it up — keep the gradient.',
-  );
+  const dragRect =
+    drag && Math.abs(drag.bx - drag.ax) > 0 && Math.abs(drag.by - drag.ay) > 0
+      ? {
+          x: Math.min(drag.ax, drag.bx),
+          y: Math.min(drag.ay, drag.by),
+          w: Math.abs(drag.bx - drag.ax),
+          h: Math.abs(drag.by - drag.ay),
+        }
+      : null;
 
-  const bboxNatural = useMemo((): Bbox | null => {
-    if (!sel || !shotWrapRef.current) return null;
-    const img = shotWrapRef.current.querySelector('img');
-    if (!img || !img.naturalWidth || !img.clientWidth) return null;
-    const sx = img.naturalWidth / img.clientWidth;
-    const sy = img.naturalHeight / img.clientHeight;
-    const x = Math.round(sel.x * sx);
-    const y = Math.round(sel.y * sy);
-    const width = Math.max(1, Math.round(sel.w * sx));
-    const height = Math.max(1, Math.round(sel.h * sy));
-    return { x, y, width, height };
-  }, [sel]);
-
-  useEffect(() => {
-    if (!bboxNatural || !screenshot) {
-      setCropUrl(null);
-      return;
-    }
-    const img = new Image();
-    img.onload = () => {
-      const { x, y, width, height } = bboxNatural;
-      const c = document.createElement('canvas');
-      c.width = width;
-      c.height = height;
-      const ctx = c.getContext('2d');
-      if (!ctx) return;
-      ctx.drawImage(img, x, y, width, height, 0, 0, width, height);
-      setCropUrl(c.toDataURL('image/png'));
-    };
-    img.src = screenshot;
-  }, [bboxNatural, screenshot]);
-
-  const promptText = useMemo(() => {
-    if (!bboxNatural || !natural) return '';
-    return buildSurgicalPrompt({
-      preview_url: previewUrl,
-      route,
-      bbox: bboxNatural,
-      viewport: { width: natural.w, height: natural.h },
-      intent,
-      captured_at: new Date().toISOString(),
-    });
-  }, [bboxNatural, natural, previewUrl, route, intent]);
-
-  const onCapture = useCallback(async () => {
-    const el = previewHostRef.current;
-    if (!el) return;
-    setError(null);
-    setBusy(true);
-    setScreenshot(null);
-    setSel(null);
+  const reset = useCallback(() => {
+    setPhase('idle');
     setDrag(null);
     setCropUrl(null);
-    setNatural(null);
-    try {
-      const canvas = await html2canvas(el, {
-        backgroundColor: '#070a0c',
-        scale: window.devicePixelRatio > 1 ? 2 : 1,
-        logging: false,
-      });
-      setScreenshot(canvas.toDataURL('image/png'));
-      setNatural({ w: canvas.width, h: canvas.height });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Capture failed');
-    } finally {
-      setBusy(false);
-    }
+    setError(null);
   }, []);
 
-  const onShotLoad = useCallback(() => {
-    const img = shotWrapRef.current?.querySelector('img');
-    if (img?.naturalWidth) {
-      setNatural({ w: img.naturalWidth, h: img.naturalHeight });
-    }
+  const startScreenshot = useCallback(() => {
+    setError(null);
+    setCropUrl(null);
+    setDrag(null);
+    setPhase('selecting');
   }, []);
 
-  const finalizeCrop = useCallback(() => {
-    if (!drag) return;
+  const applySelectionToCanvas = useCallback(
+    (canvas: HTMLCanvasElement, x1: number, y1: number, rw: number, rh: number, cw: number, ch: number) => {
+      const sx = canvas.width / cw;
+      const sy = canvas.height / ch;
+      const cx = Math.round(x1 * sx);
+      const cy = Math.round(y1 * sy);
+      const cwi = Math.max(1, Math.round(rw * sx));
+      const chi = Math.max(1, Math.round(rh * sy));
+      const out = document.createElement('canvas');
+      out.width = cwi;
+      out.height = chi;
+      const ctx = out.getContext('2d');
+      if (!ctx) return null;
+      ctx.drawImage(canvas, cx, cy, cwi, chi, 0, 0, cwi, chi);
+      return out.toDataURL('image/png');
+    },
+    [],
+  );
+
+  const completeSelection = useCallback(async () => {
+    if (!drag || !previewHostRef.current || phase !== 'selecting') return;
     const x1 = Math.min(drag.ax, drag.bx);
     const y1 = Math.min(drag.ay, drag.by);
     const x2 = Math.max(drag.ax, drag.bx);
     const y2 = Math.max(drag.ay, drag.by);
-    const w = x2 - x1;
-    const h = y2 - y1;
+    const rw = x2 - x1;
+    const rh = y2 - y1;
     setDrag(null);
-    if (w < 4 || h < 4) return;
-    setSel({ x: x1, y: y1, w, h });
-  }, [drag]);
+
+    if (rw < 8 || rh < 8) {
+      setPhase('idle');
+      return;
+    }
+
+    const host = previewHostRef.current;
+    const cw = host.clientWidth;
+    const ch = host.clientHeight;
+    if (!cw || !ch) return;
+
+    setBusy(true);
+    setError(null);
+    try {
+      const canvas = await html2canvas(host, {
+        backgroundColor: '#070a0c',
+        scale: window.devicePixelRatio > 1 ? 2 : 1,
+        logging: false,
+      });
+      const dataUrl = applySelectionToCanvas(canvas, x1, y1, rw, rh, cw, ch);
+      if (!dataUrl) throw new Error('Could not extract crop');
+      setCropUrl(dataUrl);
+      setPhase('ready');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Capture failed');
+      setPhase('idle');
+    } finally {
+      setBusy(false);
+    }
+  }, [drag, phase, applySelectionToCanvas]);
+
+  useEffect(() => {
+    if (phase !== 'ready' || !cropUrl) return;
+    setPromptDraft(buildInlineChatPrompt(changeHint));
+  }, [phase, cropUrl, changeHint]);
+
+  useEffect(() => {
+    if (phase !== 'selecting') return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setDrag(null);
+        setPhase('idle');
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [phase]);
 
   const overlayMouseDown = (e: ReactMouseEvent<HTMLDivElement>) => {
-    if (!screenshot) return;
     const t = e.currentTarget.getBoundingClientRect();
     setDrag({ ax: e.clientX - t.left, ay: e.clientY - t.top, bx: e.clientX - t.left, by: e.clientY - t.top });
-    setSel(null);
-    setCropUrl(null);
   };
 
   const overlayMouseMove = (e: ReactMouseEvent<HTMLDivElement>) => {
@@ -147,299 +138,247 @@ export function DemoPage({ variant = 'page' }: DemoPageProps) {
     setDrag({ ...drag, bx: e.clientX - t.left, by: e.clientY - t.top });
   };
 
-  const copyPrompt = async () => {
-    if (!promptText) return;
+  const copyForChat = async () => {
+    if (!promptDraft.trim()) return;
     try {
-      await navigator.clipboard.writeText(promptText);
+      if (cropUrl) {
+        const blob = await (await fetch(cropUrl)).blob();
+        try {
+          await navigator.clipboard.write([
+            new ClipboardItem({
+              'text/plain': new Blob([promptDraft], { type: 'text/plain' }),
+              [blob.type]: blob,
+            }),
+          ]);
+          return;
+        } catch {
+          /* some hosts only support text */
+        }
+      }
+      await navigator.clipboard.writeText(promptDraft);
     } catch {
-      setError('Clipboard blocked — select and copy manually.');
+      setError('Clipboard blocked — copy the text manually.');
     }
   };
 
-  const dims = drag
-    ? {
-        x: Math.min(drag.ax, drag.bx),
-        y: Math.min(drag.ay, drag.by),
-        w: Math.abs(drag.bx - drag.ax),
-        h: Math.abs(drag.by - drag.ay),
-      }
-    : sel;
-
-  const pad = isWorkspace ? '14px 14px 28px' : '32px 22px 80px';
-  const maxW = isWorkspace ? 'none' : 1100;
+  const pad = isWorkspace ? '12px 12px 24px' : '28px 22px 48px';
+  const maxW = isWorkspace ? 'none' : 720;
 
   return (
     <div style={{ maxWidth: maxW, margin: '0 auto', padding: pad }}>
-      {isWorkspace && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 12,
-            marginBottom: 14,
-            paddingBottom: 12,
-            borderBottom: '1px solid var(--border)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontWeight: 700, letterSpacing: '-0.03em' }}>
-              Cursurgeon<span style={{ color: 'var(--accent)' }}>.</span>
-            </span>
-            <span style={{ fontSize: '0.72rem', color: 'var(--muted)', letterSpacing: '0.08em' }}>PANEL</span>
-          </div>
-          <span style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>Capture → crop → copy</span>
-        </div>
-      )}
-
-      <h1
+      <header
         style={{
-          margin: '0 0 8px',
-          fontSize: isWorkspace ? '1.15rem' : 'clamp(1.5rem, 3vw, 2rem)',
-          letterSpacing: '-0.03em',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
+          marginBottom: 16,
+          flexWrap: 'wrap',
         }}
       >
-        {isWorkspace ? 'Surgical prompt' : 'Live demo — construct a surgical prompt'}
-      </h1>
-      <p style={{ margin: '0 0 20px', color: 'var(--muted)', maxWidth: 720, fontSize: isWorkspace ? '0.88rem' : undefined }}>
-        {isWorkspace ? (
-          <>
-            Sample site below — <strong style={{ color: 'var(--text)' }}>Capture</strong>, then drag on the shot to mark the UI you want
-            changed. <strong style={{ color: 'var(--text)' }}>Copy prompt</strong> and paste into Cursor chat with the crop image.
-          </>
-        ) : (
-          <>
-            Capture the mock preview, drag a rectangle on the bitmap, then copy the structured block. In a full Cursor integration, this
-            bundle sits inline beside the crop — <strong>Enter</strong> starts the agent.
-          </>
-        )}
-      </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontWeight: 700, letterSpacing: '-0.03em', fontSize: isWorkspace ? '0.95rem' : '1.05rem' }}>
+            Cursurgeon<span style={{ color: 'var(--accent)' }}>.</span>
+          </span>
+          {!isWorkspace && (
+            <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>Preview · screenshot · chat prompt</span>
+          )}
+        </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {phase === 'selecting' && (
+            <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>Drag a box on the preview · Esc to cancel</span>
+          )}
+          {phase !== 'selecting' && (
+            <button
+              type="button"
+              onClick={startScreenshot}
+              disabled={busy}
+              style={btnScreenshot}
+            >
+              {busy ? 'Working…' : 'Screenshot'}
+            </button>
+          )}
+          {phase === 'ready' && (
+            <button type="button" onClick={reset} style={btnGhost}>
+              New screenshot
+            </button>
+          )}
+        </div>
+      </header>
+
+      {!isWorkspace && (
+        <p style={{ margin: '0 0 16px', color: 'var(--muted)', fontSize: '0.95rem', lineHeight: 1.5 }}>
+          Put this panel on the right, keep chat on the left. <strong style={{ color: 'var(--text)' }}>Screenshot</strong>, drag on the
+          live preview, then <strong style={{ color: 'var(--text)' }}>copy</strong> the message into Cursor — plain language only.
+        </p>
+      )}
+
+      {phase === 'idle' && (
+        <>
+          <p style={{ margin: '0 0 6px', fontSize: '0.88rem', color: 'var(--muted)' }}>
+            Optional — what should change? (You can leave blank.)
+          </p>
+          <input
+            type="text"
+            value={changeHint}
+            onChange={(e) => setChangeHint(e.target.value)}
+            placeholder='e.g. "Align the primary CTA with the ghost button"'
+            style={{ ...inputStyle, marginBottom: 16 }}
+          />
+        </>
+      )}
 
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: isWorkspace ? '1fr' : 'minmax(0,1fr) minmax(0,1fr)',
-          gap: isWorkspace ? 18 : 22,
-          alignItems: 'start',
+          position: 'relative',
+          borderRadius: 'var(--radius)',
+          border: phase === 'selecting' ? '2px solid var(--accent)' : '1px solid var(--border)',
+          overflow: 'hidden',
+          marginBottom: 20,
         }}
-        className="demo-grid"
       >
-        <section style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.12em', color: 'var(--muted)' }}>
-            PREVIEW (CAPTURE TARGET)
-          </div>
-          <div ref={previewHostRef}>
-            <SampleSitePreview />
-          </div>
-          <button
-            type="button"
-            onClick={onCapture}
-            disabled={busy}
-            style={{
-              alignSelf: 'flex-start',
-              padding: '12px 20px',
-              borderRadius: 10,
-              border: '1px solid var(--accent)',
-              background: 'var(--accent-dim)',
-              color: 'var(--accent)',
-              fontWeight: 600,
-              cursor: busy ? 'wait' : 'pointer',
-            }}
-          >
-            {busy ? 'Capturing…' : 'Capture screenshot'}
-          </button>
-        </section>
-
-        <section style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.12em', color: 'var(--muted)' }}>
-            CROP ON SCREENSHOT
-          </div>
-          <div
-            ref={shotWrapRef}
-            style={{
-              position: 'relative',
-              display: 'inline-block',
-              maxWidth: '100%',
-              minHeight: isWorkspace ? 160 : 200,
-              background: 'var(--bg-elevated)',
-              borderRadius: 'var(--radius)',
-              border: '1px dashed var(--border)',
-            }}
-          >
-            {screenshot ? (
-              <>
-                <img
-                  src={screenshot}
-                  alt="Captured preview"
-                  onLoad={onShotLoad}
-                  style={{ display: 'block', width: '100%', height: 'auto' }}
-                />
-                <div
-                  role="presentation"
-                  onMouseDown={overlayMouseDown}
-                  onMouseMove={overlayMouseMove}
-                  onMouseUp={finalizeCrop}
-                  onMouseLeave={() => drag && finalizeCrop()}
-                  style={{
-                    position: 'absolute',
-                    left: 0,
-                    top: 0,
-                    width: '100%',
-                    height: '100%',
-                    cursor: 'crosshair',
-                  }}
-                />
-                {dims && dims.w > 0 && dims.h > 0 && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      left: dims.x,
-                      top: dims.y,
-                      width: dims.w,
-                      height: dims.h,
-                      border: '2px solid var(--accent)',
-                      background: 'rgba(62, 203, 155, 0.12)',
-                      pointerEvents: 'none',
-                      boxSizing: 'border-box',
-                    }}
-                  />
-                )}
-              </>
-            ) : (
-              <div style={{ padding: 24, color: 'var(--muted)', fontSize: '0.95rem' }}>
-                Capture the preview to enable selection.
-              </div>
+        <div ref={previewHostRef}>
+          <SampleSitePreview />
+        </div>
+        {phase === 'selecting' && (
+          <>
+            <div
+              role="presentation"
+              onMouseDown={overlayMouseDown}
+              onMouseMove={overlayMouseMove}
+              onMouseUp={completeSelection}
+              onMouseLeave={() => drag && void completeSelection()}
+              style={{
+                position: 'absolute',
+                inset: 0,
+                cursor: 'crosshair',
+                background: 'rgba(0,0,0,0.35)',
+              }}
+            />
+            {dragRect && dragRect.w >= 4 && dragRect.h >= 4 && (
+              <div
+                style={{
+                  position: 'absolute',
+                  left: dragRect.x,
+                  top: dragRect.y,
+                  width: dragRect.w,
+                  height: dragRect.h,
+                  border: '2px solid var(--accent)',
+                  boxShadow: '0 0 0 9999px rgba(0,0,0,0.45)',
+                  pointerEvents: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
             )}
-          </div>
-
-          <label style={labelStyle}>
-            Preview URL (metadata)
-            <input value={previewUrl} onChange={(e) => setPreviewUrl(e.target.value)} style={inputStyle} />
-          </label>
-          <label style={labelStyle}>
-            Route / path
-            <input value={route} onChange={(e) => setRoute(e.target.value)} style={inputStyle} />
-          </label>
-          <label style={labelStyle}>
-            Intent
-            <textarea value={intent} onChange={(e) => setIntent(e.target.value)} rows={isWorkspace ? 3 : 4} style={{ ...inputStyle, resize: 'vertical' }} />
-          </label>
-
-          {error && <div style={{ color: 'var(--danger)', fontSize: '0.9rem' }}>{error}</div>}
-        </section>
+          </>
+        )}
       </div>
 
-      <section style={{ marginTop: isWorkspace ? 22 : 36 }}>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 12,
-            flexWrap: 'wrap',
-            marginBottom: 12,
-          }}
-        >
-          <div style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.12em', color: 'var(--muted)' }}>
-            SURGICAL PROMPT + CROP
-          </div>
-          <button
-            type="button"
-            onClick={copyPrompt}
-            disabled={!promptText}
-            style={{
-              padding: '10px 16px',
-              borderRadius: 10,
-              border: '1px solid var(--border)',
-              background: promptText ? 'var(--accent)' : '#333',
-              color: promptText ? '#041109' : '#888',
-              fontWeight: 600,
-              cursor: promptText ? 'pointer' : 'not-allowed',
-            }}
-          >
-            Copy prompt text
-          </button>
+      {error && (
+        <div style={{ color: 'var(--danger)', fontSize: '0.9rem', marginBottom: 12 }}>
+          {error}
         </div>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: isWorkspace ? '1fr' : 'minmax(0,1.2fr) minmax(160px,220px)',
-            gap: 16,
-            alignItems: 'start',
-          }}
-          className="prompt-grid"
-        >
-          <pre
-            style={{
-              margin: 0,
-              padding: 16,
-              borderRadius: 'var(--radius)',
-              border: '1px solid var(--border)',
-              background: '#080c0f',
-              fontSize: isWorkspace ? '0.7rem' : '0.78rem',
-              lineHeight: 1.45,
-              overflow: 'auto',
-              maxHeight: isWorkspace ? 240 : 360,
-              fontFamily: 'var(--font-mono)',
-            }}
-          >
-            {promptText || 'Select a region on the screenshot to generate the surgical JSON block.'}
-          </pre>
-          {!isWorkspace && (
-            <div style={{ borderRadius: 'var(--radius)', border: '1px solid var(--border)', overflow: 'hidden', background: '#080c0f' }}>
-              <div style={{ padding: '8px 10px', fontSize: '0.68rem', color: 'var(--muted)', borderBottom: '1px solid var(--border)' }}>
-                Cropped attachment
-              </div>
-              {cropUrl ? (
-                <img src={cropUrl} alt="Crop" style={{ display: 'block', width: '100%', height: 'auto' }} />
-              ) : (
-                <div style={{ padding: 16, color: 'var(--muted)', fontSize: '0.85rem' }}>Select a region</div>
-              )}
-            </div>
-          )}
-        </div>
-        {isWorkspace && (
-          <div style={{ marginTop: 12, borderRadius: 'var(--radius)', border: '1px solid var(--border)', overflow: 'hidden', background: '#080c0f' }}>
-            <div style={{ padding: '8px 10px', fontSize: '0.68rem', color: 'var(--muted)', borderBottom: '1px solid var(--border)' }}>
-              Cropped attachment
-            </div>
-            {cropUrl ? (
-              <img src={cropUrl} alt="Crop" style={{ display: 'block', maxWidth: 220, height: 'auto', margin: '0 auto' }} />
-            ) : (
-              <div style={{ padding: 16, color: 'var(--muted)', fontSize: '0.85rem' }}>Select a region</div>
-            )}
-          </div>
-        )}
-        {bboxNatural && (
-          <p style={{ marginTop: 12, fontSize: '0.85rem', color: 'var(--muted)' }}>
-            Bbox (natural px): {bboxNatural.x}, {bboxNatural.y} · {bboxNatural.width}×{bboxNatural.height}
-          </p>
-        )}
-      </section>
+      )}
 
-      <style>{`
-        @media (max-width: 900px) {
-          .demo-grid { grid-template-columns: 1fr !important; }
-          .prompt-grid { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
+      {phase === 'ready' && cropUrl && (
+        <section style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.14em', color: 'var(--muted)' }}>
+            FOR CURSOR CHAT
+          </div>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+            <div
+              style={{
+                borderRadius: 12,
+                border: '1px solid var(--border)',
+                overflow: 'hidden',
+                flexShrink: 0,
+                maxWidth: 200,
+                background: 'var(--bg-elevated)',
+              }}
+            >
+              <img src={cropUrl} alt="" style={{ display: 'block', width: '100%', height: 'auto' }} />
+            </div>
+            <div style={{ flex: '1 1 240px', minWidth: 0 }}>
+              <textarea
+                value={promptDraft}
+                onChange={(e) => setPromptDraft(e.target.value)}
+                rows={6}
+                style={chatPromptStyle}
+              />
+              <button
+                type="button"
+                onClick={copyForChat}
+                disabled={!promptDraft.trim()}
+                style={{ ...btnPrimary, marginTop: 12, width: '100%' }}
+              >
+                Copy for chat
+              </button>
+              <p style={{ margin: '10px 0 0', fontSize: '0.78rem', color: 'var(--muted)' }}>
+                Paste in this chat with the image. If the image didn’t copy, drag the thumbnail into the composer.
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   );
 }
 
-const labelStyle: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 6,
-  fontSize: '0.85rem',
+const btnScreenshot: CSSProperties = {
+  padding: '10px 18px',
+  borderRadius: 10,
+  border: 'none',
+  background: 'var(--accent)',
+  color: '#041109',
+  fontWeight: 700,
+  cursor: 'pointer',
+  fontSize: '0.9rem',
+};
+
+const btnGhost: CSSProperties = {
+  padding: '10px 14px',
+  borderRadius: 10,
+  border: '1px solid var(--border)',
+  background: 'transparent',
   color: 'var(--muted)',
+  fontWeight: 600,
+  cursor: 'pointer',
+  fontSize: '0.85rem',
+};
+
+const btnPrimary: CSSProperties = {
+  padding: '12px 18px',
+  borderRadius: 10,
+  border: 'none',
+  background: 'var(--accent)',
+  color: '#041109',
+  fontWeight: 700,
+  cursor: 'pointer',
+  fontSize: '0.9rem',
 };
 
 const inputStyle: CSSProperties = {
+  width: '100%',
   padding: '10px 12px',
   borderRadius: 8,
   border: '1px solid var(--border)',
   background: 'var(--bg-elevated)',
   color: 'var(--text)',
   fontSize: '0.95rem',
+  boxSizing: 'border-box',
+};
+
+const chatPromptStyle: CSSProperties = {
+  width: '100%',
+  margin: 0,
+  padding: 14,
+  borderRadius: 12,
+  border: '1px solid var(--border)',
+  background: '#10161c',
+  color: 'var(--text)',
+  fontSize: '0.95rem',
+  lineHeight: 1.5,
+  fontFamily: 'var(--font-sans)',
+  resize: 'vertical',
+  boxSizing: 'border-box',
 };

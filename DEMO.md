@@ -9,8 +9,8 @@
 3. In that window: Command Palette → **Cursurgeon: Open surgical demo (side panel)**.
 4. Dock the new tab to the **right** editor group (drag tab title).
 5. **Left:** your code or this README. **Right:** Northwind sample site + capture flow.
-6. Click **Capture screenshot** → drag a box around **Start free trial** → **Copy prompt text**.
-7. Paste into Cursor chat, attach the cropped PNG from the panel (screenshot the crop or save from devtools if needed for video).
+6. Click **Screenshot** → drag a box on the **live preview** (dimmed overlay) → release to capture.
+7. **Copy for chat** — paste into Cursor chat; drag the crop thumbnail in if the image didn’t paste. No JSON or metadata fields.
 
 ## Path B — Browser + public URL (for judges)
 

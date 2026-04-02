@@ -99,7 +99,7 @@ export function PitchPage() {
             />
             <PitchCard
               title="The move"
-              body="Capture → crop → structured block: JSON metadata (bbox, route, preview URL) + cropped image + short intent. Localized scope, repeatable packaging."
+              body="Screenshot → drag on the live preview → plain-language prompt for chat plus the crop. No JSON wall, no internal URLs in your message."
             />
             <PitchCard
               title="Native Cursor"
@@ -120,9 +120,9 @@ export function PitchPage() {
             <h2 style={{ margin: '0 0 20px', fontSize: '1.5rem', letterSpacing: '-0.03em' }}>Judge checklist (60 seconds)</h2>
             <ol style={{ margin: 0, paddingLeft: 22, color: 'var(--muted)', lineHeight: 1.85, maxWidth: 800 }}>
               <li>Open the live demo: public <code>#/workspace</code> or run the Cursor extension side panel.</li>
-              <li>Capture the mock dashboard, drag a box around the primary CTA.</li>
-              <li>Show the generated surgical block and the crop thumbnail.</li>
-              <li>Copy prompt — that is the artifact the agent consumes next to the image in Cursor.</li>
+              <li>Click <strong>Screenshot</strong>, drag on the live Northwind preview around the primary CTA.</li>
+              <li>Show the short chat prompt and crop — no metadata form.</li>
+              <li><strong>Copy for chat</strong> and paste here with the image.</li>
             </ol>
           </div>
 

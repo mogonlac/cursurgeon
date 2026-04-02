@@ -1,6 +1,7 @@
 node_modules
 dist
 extension/media
+extension/*.vsix
 extension/node_modules
 extension/out
 *.tsbuildinfo

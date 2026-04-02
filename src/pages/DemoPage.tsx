@@ -2,6 +2,7 @@ import html2canvas from 'html2canvas';
 import type { CSSProperties, MouseEvent as ReactMouseEvent } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { SampleSitePreview } from '../components/SampleSitePreview';
+import { isCursurgeonHost, postSendToChat } from '../cursurgeonBridge';
 import { buildInlineChatPrompt } from '../lib/inlineChatPrompt';
 
 type Phase = 'idle' | 'selecting' | 'ready';
@@ -26,6 +27,11 @@ export function DemoPage({ variant = 'page' }: DemoPageProps) {
   /** First-line hint merged into the generated chat prompt when selection completes. */
   const [changeHint, setChangeHint] = useState('');
   const [promptDraft, setPromptDraft] = useState('');
+  const [inExtension, setInExtension] = useState(false);
+
+  useEffect(() => {
+    setInExtension(isCursurgeonHost());
+  }, []);
 
   const dragRect =
     drag && Math.abs(drag.bx - drag.ax) > 0 && Math.abs(drag.by - drag.ay) > 0
@@ -181,7 +187,9 @@ export function DemoPage({ variant = 'page' }: DemoPageProps) {
             Cursurgeon<span style={{ color: 'var(--accent)' }}>.</span>
           </span>
           {!isWorkspace && (
-            <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>Preview · screenshot · chat prompt</span>
+            <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>
+              Preview · screenshot · chat{inExtension ? ' · extension' : ''}
+            </span>
           )}
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -305,16 +313,36 @@ export function DemoPage({ variant = 'page' }: DemoPageProps) {
                 rows={6}
                 style={chatPromptStyle}
               />
-              <button
-                type="button"
-                onClick={copyForChat}
-                disabled={!promptDraft.trim()}
-                style={{ ...btnPrimary, marginTop: 12, width: '100%' }}
-              >
-                Copy for chat
-              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
+                {inExtension && (
+                  <button
+                    type="button"
+                    onClick={() => postSendToChat(promptDraft)}
+                    disabled={!promptDraft.trim()}
+                    style={{ ...btnPrimary, width: '100%', border: '2px solid rgba(255,255,255,0.12)' }}
+                  >
+                    Send to Cursor chat
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={copyForChat}
+                  disabled={!promptDraft.trim()}
+                  style={{
+                    ...btnPrimary,
+                    width: '100%',
+                    background: inExtension ? 'transparent' : 'var(--accent)',
+                    color: inExtension ? 'var(--accent)' : '#041109',
+                    border: inExtension ? '1px solid var(--accent)' : 'none',
+                  }}
+                >
+                  Copy for chat
+                </button>
+              </div>
               <p style={{ margin: '10px 0 0', fontSize: '0.78rem', color: 'var(--muted)' }}>
-                Paste in this chat with the image. If the image didn’t copy, drag the thumbnail into the composer.
+                {inExtension
+                  ? 'Send to Cursor chat: focuses Agent/Chat and pastes text. Drag the crop into the composer if the image is not there.'
+                  : 'Paste in chat with the image. If the image didn’t copy, drag the thumbnail into the composer.'}
               </p>
             </div>
           </div>

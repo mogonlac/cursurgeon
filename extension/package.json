@@ -1,25 +1,59 @@
 {
   "name": "cursurgeon",
   "displayName": "Cursurgeon",
-  "description": "Open the surgical prompting demo in a side panel (webview) or Simple Browser.",
-  "version": "0.2.0",
+  "description": "Surgical UI preview in the sidebar — screenshot a region, send plain text to Cursor chat.",
+  "version": "0.3.0",
   "publisher": "mogonlac",
+  "icon": "resources/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mogonlac/cursurgeon.git"
+  },
   "engines": {
     "vscode": "^1.85.0"
   },
   "categories": ["Other"],
-  "activationEvents": ["onCommand:cursurgeon.openPanel", "onCommand:cursurgeon.openSimpleBrowser"],
+  "activationEvents": [
+    "onView:cursurgeon.preview",
+    "onCommand:cursurgeon.openPanel",
+    "onCommand:cursurgeon.openSimpleBrowser",
+    "onCommand:cursurgeon.focusPreview"
+  ],
   "main": "./out/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "cursurgeon",
+          "title": "Cursurgeon",
+          "icon": "resources/icon.png"
+        }
+      ]
+    },
+    "views": {
+      "cursurgeon": [
+        {
+          "type": "webview",
+          "id": "cursurgeon.preview",
+          "name": "Preview",
+          "contextualTitle": "Cursurgeon preview"
+        }
+      ]
+    },
     "commands": [
       {
+        "command": "cursurgeon.focusPreview",
+        "title": "Cursurgeon: Focus preview (activity bar)",
+        "category": "Cursurgeon"
+      },
+      {
         "command": "cursurgeon.openPanel",
-        "title": "Cursurgeon: Open surgical demo (side panel)",
+        "title": "Cursurgeon: Open preview beside editor",
         "category": "Cursurgeon"
       },
       {
         "command": "cursurgeon.openSimpleBrowser",
-        "title": "Cursurgeon: Open demo in Simple Browser (run npm run dev first)",
+        "title": "Cursurgeon: Open in Simple Browser (dev server)",
         "category": "Cursurgeon"
       }
     ]

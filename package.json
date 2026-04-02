@@ -11,7 +11,8 @@
     "compile-extension": "npm run compile --prefix extension",
     "install:extension": "npm install --prefix extension",
     "setup": "npm install && npm install --prefix extension && npm run compile-extension && npm run bundle-extension",
-    "vscode:prepublish": "npm run bundle-extension && npm run compile-extension"
+    "vscode:prepublish": "npm run bundle-extension && npm run compile-extension",
+    "package-vsix": "npm run bundle-extension && npm run compile-extension && cd extension && npx --yes @vscode/vsce package --no-dependencies"
   },
   "dependencies": {
     "html2canvas": "^1.4.1",

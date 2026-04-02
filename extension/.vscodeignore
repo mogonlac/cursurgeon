@@ -3,3 +3,4 @@ tsconfig.json
 **/*.map
 .vscode/**
 prep-media.mjs
+node_modules/**

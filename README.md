@@ -65,14 +65,19 @@ Deploy the `dist/` folder. Use these URLs in submissions and recordings:
 - Demo: `https://YOUR_HOST/#/demo`
 - Panel: `https://YOUR_HOST/#/workspace`
 
-## Package a `.vsix` (optional)
+## Install the `.vsix` (recommended — **same Cursor window**, sidebar preview)
+
+From repo root:
 
 ```bash
-npm run bundle-extension
-cd extension && npm run compile && npx @vscode/vsce package --no-dependencies
+npm run package-vsix
 ```
 
-Install in Cursor via **Extensions** → **Install from VSIX…**.
+Install **`extension/cursurgeon-*.vsix`** via **Extensions** → **⋯** → **Install from VSIX…**, then reload. Click the **Cursurgeon** icon in the activity bar to open **Preview**.
+
+Step-by-step: [INSTALL_VSIX.md](./INSTALL_VSIX.md).
+
+Debug builds (F5) still use a separate Extension Development Host — only needed while hacking the extension.
 
 ## Product thesis
 

@@ -9,6 +9,8 @@
     "preview": "vite preview",
     "bundle-extension": "npm run build && node extension/prep-media.mjs",
     "compile-extension": "npm run compile --prefix extension",
+    "install:extension": "npm install --prefix extension",
+    "setup": "npm install && npm install --prefix extension && npm run compile-extension && npm run bundle-extension",
     "vscode:prepublish": "npm run bundle-extension && npm run compile-extension"
   },
   "dependencies": {

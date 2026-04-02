@@ -13,15 +13,26 @@ Routing uses the **hash** (`#/demo`, `#/workspace`) so static deploys (Vercel, G
 
 ## Plug into Cursor (side panel)
 
-1. Clone the repo and install:
+1. Clone the repo and install (pick one):
+
+   **Easiest (one command, works in PowerShell 5)** — npm runs the sub-steps in cmd, so you avoid `&&` issues in the shell:
+
+   ```bash
+   npm run setup
+   ```
+
+   **Manual:**
 
    ```bash
    npm install
-   cd extension && npm install && cd ..
+   npm install --prefix extension
+   npm run compile-extension
    npm run bundle-extension
    ```
 
-   This builds the web app and copies `dist/` → `extension/media/`.
+   **Windows PowerShell 5:** if you type commands yourself, don’t use `&&` between commands (use separate lines or `;`). Or rely on `npm run setup` above.
+
+   This installs deps, compiles the extension, builds the web app, and copies `dist/` → `extension/media/`.
 
 2. In **Cursor**, open this repo folder.
 3. **Run and Debug** → **Run Cursurgeon extension** (F5). An **[Extension Development Host]** window opens.

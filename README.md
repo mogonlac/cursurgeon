@@ -1,6 +1,6 @@
 # Cursurgeon
 
-**Surgical prompting for Cursor** — capture a region of your running UI, crop it, and emit a structured prompt (bbox, preview URL, route, intent) plus the cropped image so the agent edits the right place.
+**Surgical prompting for Cursor** — **Screenshot** on a live preview, drag the region you care about, then copy a **plain chat message** plus the crop for the model. No JSON forms or internal URLs in what you paste.
 
 This repo includes:
 

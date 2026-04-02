@@ -1,0 +1,36 @@
+{
+  "name": "cursurgeon",
+  "displayName": "Cursurgeon",
+  "description": "Open the surgical prompting demo in a side panel (webview) or Simple Browser.",
+  "version": "0.2.0",
+  "publisher": "mogonlac",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": ["onCommand:cursurgeon.openPanel", "onCommand:cursurgeon.openSimpleBrowser"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "cursurgeon.openPanel",
+        "title": "Cursurgeon: Open surgical demo (side panel)",
+        "category": "Cursurgeon"
+      },
+      {
+        "command": "cursurgeon.openSimpleBrowser",
+        "title": "Cursurgeon: Open demo in Simple Browser (run npm run dev first)",
+        "category": "Cursurgeon"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "~5.6.2"
+  }
+}

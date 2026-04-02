@@ -1,5 +1,8 @@
 node_modules
 dist
+extension/media
+extension/node_modules
+extension/out
 *.tsbuildinfo
 *.local
 .DS_Store

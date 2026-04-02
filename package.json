@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "bundle-extension": "npm run build && node extension/prep-media.mjs",
+    "compile-extension": "npm run compile --prefix extension",
+    "vscode:prepublish": "npm run bundle-extension && npm run compile-extension"
   },
   "dependencies": {
     "html2canvas": "^1.4.1",

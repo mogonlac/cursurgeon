@@ -53,7 +53,20 @@ export function PitchPage() {
               textDecoration: 'none',
             }}
           >
-            Try the live demo
+            Live demo (full)
+          </Link>
+          <Link
+            to="/workspace"
+            style={{
+              padding: '14px 24px',
+              borderRadius: 10,
+              border: '1px solid var(--accent)',
+              color: 'var(--accent)',
+              fontWeight: 700,
+              textDecoration: 'none',
+            }}
+          >
+            Panel layout
           </Link>
           <a
             href="https://github.com/mogonlac/cursurgeon"
@@ -70,6 +83,11 @@ export function PitchPage() {
             View on GitHub
           </a>
         </div>
+        <p style={{ margin: '20px auto 0', maxWidth: 560, fontSize: '0.9rem', color: 'var(--muted)' }}>
+          Hosted URL for your video: use the hash routes —{' '}
+          <code style={{ fontSize: '0.82em' }}>yoursite.com/#/demo</code> or{' '}
+          <code style={{ fontSize: '0.82em' }}>yoursite.com/#/workspace</code> (compact, good beside the editor).
+        </p>
       </section>
 
       <section style={{ borderTop: '1px solid var(--border)', background: 'linear-gradient(180deg, var(--bg-elevated) 0%, var(--bg) 100%)' }}>
@@ -85,7 +103,7 @@ export function PitchPage() {
             />
             <PitchCard
               title="Native Cursor"
-              body="This repo ships the surgical constructor in-browser for judges. The product thesis: extend Cursor so the prompt appears inline beside the crop; Enter submits to the agent — not a Composer handoff."
+              body="Install the bundled VS Code/Cursor extension from this repo: Command Palette → “Cursurgeon: Open surgical demo (side panel)” — dock right for code + preview. See README and DEMO.md."
             />
           </div>
 
@@ -101,7 +119,7 @@ export function PitchPage() {
           <div>
             <h2 style={{ margin: '0 0 20px', fontSize: '1.5rem', letterSpacing: '-0.03em' }}>Judge checklist (60 seconds)</h2>
             <ol style={{ margin: 0, paddingLeft: 22, color: 'var(--muted)', lineHeight: 1.85, maxWidth: 800 }}>
-              <li>Open the live demo route.</li>
+              <li>Open the live demo: public <code>#/workspace</code> or run the Cursor extension side panel.</li>
               <li>Capture the mock dashboard, drag a box around the primary CTA.</li>
               <li>Show the generated surgical block and the crop thumbnail.</li>
               <li>Copy prompt — that is the artifact the agent consumes next to the image in Cursor.</li>

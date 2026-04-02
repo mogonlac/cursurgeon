@@ -1,7 +1,7 @@
 import html2canvas from 'html2canvas';
 import type { CSSProperties, MouseEvent as ReactMouseEvent } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { MockPreview } from '../components/MockPreview';
+import { SampleSitePreview } from '../components/SampleSitePreview';
 import { buildSurgicalPrompt, type Bbox } from '../lib/buildSurgicalPrompt';
 
 type Sel =
@@ -18,7 +18,15 @@ function initialPreviewUrl() {
   return window.location.href;
 }
 
-export function DemoPage() {
+export type DemoVariant = 'page' | 'workspace';
+
+export type DemoPageProps = {
+  /** `workspace` = Cursor side panel: tight layout, no global nav (route /workspace). */
+  variant?: DemoVariant;
+};
+
+export function DemoPage({ variant = 'page' }: DemoPageProps) {
+  const isWorkspace = variant === 'workspace';
   const previewHostRef = useRef<HTMLDivElement>(null);
   const shotWrapRef = useRef<HTMLDivElement>(null);
 
@@ -31,8 +39,10 @@ export function DemoPage() {
   const [cropUrl, setCropUrl] = useState<string | null>(null);
 
   const [previewUrl, setPreviewUrl] = useState(initialPreviewUrl);
-  const [route, setRoute] = useState('/demo');
-  const [intent, setIntent] = useState('Make the primary CTA align with the secondary button and use a stronger primary green.');
+  const [route, setRoute] = useState(isWorkspace ? '/workspace' : '/demo');
+  const [intent, setIntent] = useState(
+    'Align the primary “Start free trial” button with “Book a walkthrough” and nudge it up — keep the gradient.',
+  );
 
   const bboxNatural = useMemo((): Bbox | null => {
     if (!sel || !shotWrapRef.current) return null;
@@ -155,21 +165,61 @@ export function DemoPage() {
       }
     : sel;
 
+  const pad = isWorkspace ? '14px 14px 28px' : '32px 22px 80px';
+  const maxW = isWorkspace ? 'none' : 1100;
+
   return (
-    <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 22px 80px' }}>
-      <h1 style={{ margin: '0 0 8px', fontSize: 'clamp(1.5rem, 3vw, 2rem)', letterSpacing: '-0.03em' }}>
-        Live demo — construct a surgical prompt
+    <div style={{ maxWidth: maxW, margin: '0 auto', padding: pad }}>
+      {isWorkspace && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+            marginBottom: 14,
+            paddingBottom: 12,
+            borderBottom: '1px solid var(--border)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontWeight: 700, letterSpacing: '-0.03em' }}>
+              Cursurgeon<span style={{ color: 'var(--accent)' }}>.</span>
+            </span>
+            <span style={{ fontSize: '0.72rem', color: 'var(--muted)', letterSpacing: '0.08em' }}>PANEL</span>
+          </div>
+          <span style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>Capture → crop → copy</span>
+        </div>
+      )}
+
+      <h1
+        style={{
+          margin: '0 0 8px',
+          fontSize: isWorkspace ? '1.15rem' : 'clamp(1.5rem, 3vw, 2rem)',
+          letterSpacing: '-0.03em',
+        }}
+      >
+        {isWorkspace ? 'Surgical prompt' : 'Live demo — construct a surgical prompt'}
       </h1>
-      <p style={{ margin: '0 0 28px', color: 'var(--muted)', maxWidth: 720 }}>
-        Capture the mock preview, drag a rectangle on the bitmap, then copy the structured block. In the Cursor
-        extension, this same bundle is submitted inline next to the crop — <strong>Enter</strong> starts the agent.
+      <p style={{ margin: '0 0 20px', color: 'var(--muted)', maxWidth: 720, fontSize: isWorkspace ? '0.88rem' : undefined }}>
+        {isWorkspace ? (
+          <>
+            Sample site below — <strong style={{ color: 'var(--text)' }}>Capture</strong>, then drag on the shot to mark the UI you want
+            changed. <strong style={{ color: 'var(--text)' }}>Copy prompt</strong> and paste into Cursor chat with the crop image.
+          </>
+        ) : (
+          <>
+            Capture the mock preview, drag a rectangle on the bitmap, then copy the structured block. In a full Cursor integration, this
+            bundle sits inline beside the crop — <strong>Enter</strong> starts the agent.
+          </>
+        )}
       </p>
 
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)',
-          gap: 22,
+          gridTemplateColumns: isWorkspace ? '1fr' : 'minmax(0,1fr) minmax(0,1fr)',
+          gap: isWorkspace ? 18 : 22,
           alignItems: 'start',
         }}
         className="demo-grid"
@@ -179,7 +229,7 @@ export function DemoPage() {
             PREVIEW (CAPTURE TARGET)
           </div>
           <div ref={previewHostRef}>
-            <MockPreview />
+            <SampleSitePreview />
           </div>
           <button
             type="button"
@@ -210,7 +260,7 @@ export function DemoPage() {
               position: 'relative',
               display: 'inline-block',
               maxWidth: '100%',
-              minHeight: 200,
+              minHeight: isWorkspace ? 160 : 200,
               background: 'var(--bg-elevated)',
               borderRadius: 'var(--radius)',
               border: '1px dashed var(--border)',
@@ -272,14 +322,14 @@ export function DemoPage() {
           </label>
           <label style={labelStyle}>
             Intent
-            <textarea value={intent} onChange={(e) => setIntent(e.target.value)} rows={4} style={{ ...inputStyle, resize: 'vertical' }} />
+            <textarea value={intent} onChange={(e) => setIntent(e.target.value)} rows={isWorkspace ? 3 : 4} style={{ ...inputStyle, resize: 'vertical' }} />
           </label>
 
           {error && <div style={{ color: 'var(--danger)', fontSize: '0.9rem' }}>{error}</div>}
         </section>
       </div>
 
-      <section style={{ marginTop: 36 }}>
+      <section style={{ marginTop: isWorkspace ? 22 : 36 }}>
         <div
           style={{
             display: 'flex',
@@ -313,7 +363,7 @@ export function DemoPage() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'minmax(0,1.2fr) minmax(160px,220px)',
+            gridTemplateColumns: isWorkspace ? '1fr' : 'minmax(0,1.2fr) minmax(160px,220px)',
             gap: 16,
             alignItems: 'start',
           }}
@@ -326,26 +376,40 @@ export function DemoPage() {
               borderRadius: 'var(--radius)',
               border: '1px solid var(--border)',
               background: '#080c0f',
-              fontSize: '0.78rem',
+              fontSize: isWorkspace ? '0.7rem' : '0.78rem',
               lineHeight: 1.45,
               overflow: 'auto',
-              maxHeight: 360,
+              maxHeight: isWorkspace ? 240 : 360,
               fontFamily: 'var(--font-mono)',
             }}
           >
             {promptText || 'Select a region on the screenshot to generate the surgical JSON block.'}
           </pre>
-          <div style={{ borderRadius: 'var(--radius)', border: '1px solid var(--border)', overflow: 'hidden', background: '#080c0f' }}>
+          {!isWorkspace && (
+            <div style={{ borderRadius: 'var(--radius)', border: '1px solid var(--border)', overflow: 'hidden', background: '#080c0f' }}>
+              <div style={{ padding: '8px 10px', fontSize: '0.68rem', color: 'var(--muted)', borderBottom: '1px solid var(--border)' }}>
+                Cropped attachment
+              </div>
+              {cropUrl ? (
+                <img src={cropUrl} alt="Crop" style={{ display: 'block', width: '100%', height: 'auto' }} />
+              ) : (
+                <div style={{ padding: 16, color: 'var(--muted)', fontSize: '0.85rem' }}>Select a region</div>
+              )}
+            </div>
+          )}
+        </div>
+        {isWorkspace && (
+          <div style={{ marginTop: 12, borderRadius: 'var(--radius)', border: '1px solid var(--border)', overflow: 'hidden', background: '#080c0f' }}>
             <div style={{ padding: '8px 10px', fontSize: '0.68rem', color: 'var(--muted)', borderBottom: '1px solid var(--border)' }}>
               Cropped attachment
             </div>
             {cropUrl ? (
-              <img src={cropUrl} alt="Crop" style={{ display: 'block', width: '100%', height: 'auto' }} />
+              <img src={cropUrl} alt="Crop" style={{ display: 'block', maxWidth: 220, height: 'auto', margin: '0 auto' }} />
             ) : (
               <div style={{ padding: 16, color: 'var(--muted)', fontSize: '0.85rem' }}>Select a region</div>
             )}
           </div>
-        </div>
+        )}
         {bboxNatural && (
           <p style={{ marginTop: 12, fontSize: '0.85rem', color: 'var(--muted)' }}>
             Bbox (natural px): {bboxNatural.x}, {bboxNatural.y} · {bboxNatural.width}×{bboxNatural.height}

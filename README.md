@@ -4,38 +4,75 @@
 
 This repo includes:
 
-- **Pitch site** (`/`) — hackathon narrative, track fit, 60-second judge path
-- **Live demo** (`/demo`) — capture → crop → copy the `cursurgeon/surgical-prompt` bundle
+- **Pitch site** (`#/`) — hackathon narrative, track fit, judge path
+- **Live demo** (`#/demo`) — two-column flow + **Northwind** sample landing
+- **Panel layout** (`#/workspace`) — compact layout for a narrow column (side panel or video)
+- **Cursor / VS Code extension** (`extension/`) — opens the same UI in a **webview beside your editor**
 
-## Product thesis
+Routing uses the **hash** (`#/demo`, `#/workspace`) so static deploys (Vercel, GitHub Pages) need no server rewrites.
 
-- **Native Cursor (target UX):** inline prompt beside the screenshot; **Enter** starts the agent — not a paste-into-Composer workflow.
-- **Hackathon track:** **Agent Runtime Tools** — a runtime affordance for spatial, multimodal context at agent decision time.
-- **Web demo:** proves the packaging format and judge flow; a Cursor/VS Code extension would wire the same bundle into the editor.
+## Plug into Cursor (side panel)
 
-## Try locally
+1. Clone the repo and install:
+
+   ```bash
+   npm install
+   cd extension && npm install && cd ..
+   npm run bundle-extension
+   ```
+
+   This builds the web app and copies `dist/` → `extension/media/`.
+
+2. In **Cursor**, open this repo folder.
+3. **Run and Debug** → **Run Cursurgeon extension** (F5). An **[Extension Development Host]** window opens.
+4. In that window: **Command Palette** → **Cursurgeon: Open surgical demo (side panel)**.
+5. Drag the webview tab into the **right** editor group — code on the left, sample site + surgical flow on the right.
+
+**Alternative (no extension):** run `npm run dev`, then Command Palette → **Cursurgeon: Open demo in Simple Browser** (from a normal window with the extension loaded) — requires dev server on port 5173.
+
+Full recording steps: [DEMO.md](./DEMO.md).
+
+## Try locally (browser only)
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) — then **Live demo**.
+Open [http://localhost:5173](http://localhost:5173) — **Live demo** or **Panel layout**.
 
-## Build
+## Build & public demo URL
 
 ```bash
 npm run build
 npm run preview
 ```
 
-Deploy `dist/` to any static host; set **Demo URL** on the bounty form to your deployed `/demo` (or root if you prefer).
+Deploy the `dist/` folder. Use these URLs in submissions and recordings:
+
+- Pitch: `https://YOUR_HOST/#/`
+- Demo: `https://YOUR_HOST/#/demo`
+- Panel: `https://YOUR_HOST/#/workspace`
+
+## Package a `.vsix` (optional)
+
+```bash
+npm run bundle-extension
+cd extension && npm run compile && npx @vscode/vsce package --no-dependencies
+```
+
+Install in Cursor via **Extensions** → **Install from VSIX…**.
+
+## Product thesis
+
+- **Native Cursor (target UX):** inline prompt beside the screenshot; **Enter** starts the agent.
+- **Hackathon track:** **Agent Runtime Tools** — runtime affordance for spatial, multimodal context.
 
 ## Submission
 
 - **GitHub:** [github.com/mogonlac/cursurgeon](https://github.com/mogonlac/cursurgeon)
 - **Main track:** Agent Runtime Tools
-- **Demo:** hosted URL with `/` (pitch) and `/demo` (interactive)
+- **Demo URL:** your deployed origin with `#/demo` or `#/workspace`
 
 ## License
 

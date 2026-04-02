@@ -1,9 +1,9 @@
 import type { CSSProperties } from 'react';
-import { NavLink, Route, Routes } from 'react-router-dom';
-import { PitchPage } from './pages/PitchPage';
+import { NavLink, Outlet, Route, Routes } from 'react-router-dom';
 import { DemoPage } from './pages/DemoPage';
+import { PitchPage } from './pages/PitchPage';
 
-function App() {
+function MainShell() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <header
@@ -58,12 +58,21 @@ function App() {
         </nav>
       </header>
       <main style={{ flex: 1 }}>
-        <Routes>
-          <Route path="/" element={<PitchPage />} />
-          <Route path="/demo" element={<DemoPage />} />
-        </Routes>
+        <Outlet />
       </main>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/workspace" element={<DemoPage variant="workspace" />} />
+      <Route element={<MainShell />}>
+        <Route path="/" element={<PitchPage />} />
+        <Route path="/demo" element={<DemoPage />} />
+      </Route>
+    </Routes>
   );
 }
 

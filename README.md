@@ -41,7 +41,7 @@ Routing uses the **hash** (`#/demo`, `#/workspace`) so static deploys (Vercel, G
 
 **Alternative (no extension):** run `npm run dev`, then Command Palette → **Cursurgeon: Open demo in Simple Browser** (from a normal window with the extension loaded) — requires dev server on port 5173.
 
-Full recording steps: [DEMO.md](./DEMO.md).
+Full recording steps: [DEMO.md](./DEMO.md). **If “Run” seems to do nothing:** read [RUN_IN_CURSOR.md](./RUN_IN_CURSOR.md) (second window + Command Palette).
 
 ## Try locally (browser only)
 

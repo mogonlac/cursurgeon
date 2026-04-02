@@ -8,6 +8,13 @@
       "args": ["--extensionDevelopmentPath=${workspaceFolder}/extension"],
       "outFiles": ["${workspaceFolder}/extension/out/**/*.js"],
       "preLaunchTask": "prep-extension-full"
+    },
+    {
+      "name": "Run Cursurgeon extension (no prebuild)",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}/extension"],
+      "outFiles": ["${workspaceFolder}/extension/out/**/*.js"]
     }
   ]
 }

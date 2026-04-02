@@ -6,20 +6,21 @@
       "type": "npm",
       "script": "bundle-extension",
       "problemMatcher": [],
-      "presentation": { "reveal": "silent" }
+      "presentation": { "reveal": "always", "panel": "shared", "clear": false }
     },
     {
       "label": "compile-extension",
       "type": "npm",
       "script": "compile-extension",
       "problemMatcher": [],
-      "presentation": { "reveal": "silent" }
+      "presentation": { "reveal": "always", "panel": "shared", "clear": false }
     },
     {
       "label": "prep-extension-full",
       "dependsOn": ["bundle-extension", "compile-extension"],
       "dependsOrder": "sequence",
-      "problemMatcher": []
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared" }
     },
     {
       "label": "vite dev",

@@ -14,10 +14,34 @@ You get **`extension/cursurgeon-x.x.x.vsix`** (filename matches `version` in `ex
 
 ## 2. Install in Cursor
 
-1. **Cursor** → **Extensions** (`Ctrl+Shift+X`).
-2. **`...`** menu (top of Extensions panel) → **Install from VSIX…**
-3. Select the generated `extension/cursurgeon-*.vsix`.
-4. **Reload** when prompted.
+The **⋯** menu does not always show **Install from VSIX** in Cursor. Use any one of these:
+
+### A. Command Palette (recommended)
+
+1. **Ctrl+Shift+P**
+2. Type **`vsix`**
+3. Run **Extensions: Install from VSIX…** (wording may vary slightly)
+4. Pick `extension\cursurgeon-*.vsix`
+5. **Reload** when prompted
+
+### B. Drag and drop
+
+1. Open **Extensions** (`Ctrl+Shift+X`)
+2. Drag your `.vsix` file from Explorer onto the Extensions side panel and drop it
+
+### C. Terminal
+
+```powershell
+cursor --install-extension "C:\path\to\cursurgeon\extension\cursurgeon-0.3.0.vsix"
+```
+
+If `cursor` is not on PATH, use the full executable, for example:
+
+```powershell
+& "$env:LOCALAPPDATA\Programs\cursor\Cursor.exe" --install-extension "C:\path\to\extension\cursurgeon-0.3.0.vsix"
+```
+
+Then **Reload** if Cursor asks.
 
 ## 3. Use it (main window only)
 
